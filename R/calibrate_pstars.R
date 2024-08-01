@@ -4,19 +4,19 @@ library(magrittr)
  p_star_cod = 0.5
  p_star_had = 0.5
  select_mode = "fh"
- select_month = 10
- k = 41
+ select_season = 1
+ k = 36
  directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
  catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
- MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_month.csv"
+ MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
 
-calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, k,
+calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season, k,
                              directed_trips_file_path, catch_draws_file_path, MRIP_comparison){
 
   MRIP_data <-   read.csv(file.path(paste0(MRIP_comparison)))%>%
     dplyr::filter(mode == select_mode,
                   draw == k,
-                  month == select_month )
+                  open == select_season )
 
   if (length(MRIP_data$dtrip) == 0) {
     p_stars <- data.frame(species = c("COD", "HAD"),
@@ -34,7 +34,7 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
                           run_number = k,
                           n_choice_occasions = c("NA"),
                           Total_estimated_trips = c("NA"),
-                          month = c(select_month, select_month))
+                          open = c(select_season, select_season))
     } else if (MRIP_data$dtrip == 0) {
 
       cod_harvest_harv_diff<-((sum(MRIP_data$tot_cod_keep)-sum(0))/sum(MRIP_data$tot_cod_keep))*100
@@ -59,7 +59,7 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
                             run_number = k,
                             n_choice_occasions = c("NA"),
                             Total_estimated_trips = c("NA"),
-                            month = c(select_month, select_month))
+                            open_season = c(select_season, select_season))
         } else {
   print(k)
 
@@ -69,8 +69,20 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
   directed_trips<-read.csv(directed_trips_file_path) %>%
     tibble::tibble() %>%
     dplyr::filter(draw == k,
-                  mode == select_mode,
-                  month == select_month)
+                  mode == select_mode) %>%
+    dplyr::mutate(open = dplyr::case_when(cod_bag > 0 ~ 1, TRUE ~ 0))
+
+  open<- directed_trips %>%
+    dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
+                  period2 = paste0(month, "_", day, "_", mode)) %>%
+    dplyr::select(period2, open) %>%
+    dplyr::filter(open == select_season)
+
+
+  directed_trips<- directed_trips %>%
+    dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
+                  period2 = paste0(month, "_", day, "_", mode)) %>%
+    dplyr::filter(open == select_season)
 
 
   ######################################
@@ -79,9 +91,9 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
 
   # Set up an output file for the separately simulated within-season regulatory periods
   directed_trips_p <- directed_trips %>%
-    dplyr::mutate(day = as.numeric(stringr::str_extract(day, "^\\d{2}")),
-                  month = as.numeric(month)) %>%
-    dplyr::mutate(period2 = as.character(paste0(month, "_", day, "_", mode))) %>% #make day of year and mode combo
+    #dplyr::mutate(day = as.numeric(stringr::str_extract(day, "^\\d{2}")),
+    #              month = as.numeric(month)) %>%
+    #dplyr::mutate(period2 = as.character(paste0(month, "_", day, "_", mode))) %>% #make day of year and mode combo
     #group_by(period) %>%
     dplyr::mutate(#n_trips = floor(mean(dtrip_2019)),
       n_trips = floor(dtrip),
@@ -93,35 +105,36 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
                   cod_bag,
                   cod_min,
                   hadd_bag,
-                  hadd_min )
+                  hadd_min)
 
   param_draws <- directed_trips_p %>%
     dplyr::select(period2, n_draws) %>%
     tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
   cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
-    dplyr::filter(mode == select_mode,
-                  month == select_month) %>%
+    dplyr::mutate(day = as.numeric(stringr::str_extract(day, "\\d+")),
+                  period2 = paste0(month, "_", day, "_", mode)) %>%
+    dplyr::left_join(open, by = "period2") %>%
+    dplyr::filter(open == select_season) %>%
+    dplyr::select(!open) %>%
+    dplyr::filter(mode == select_mode) %>%
     dplyr::rename(tot_cod_catch = cod_catch,
                   tot_had_catch = hadd_catch,
                   keep_cod =  cod_keep,
                   keep_had =  hadd_keep)  %>%
-    dplyr::select(mode,month,tot_cod_catch,keep_cod,cod_rel,tot_had_catch,keep_had,hadd_rel,
+    dplyr::select(period2, mode,month,tot_cod_catch,keep_cod,cod_rel,tot_had_catch,keep_had,hadd_rel,
                   tripid,catch_draw,day, draw, age, days_fished, cost)
 
    trip_costs<-cod_catch_data  %>%
-     dplyr::filter(mode == select_mode,
-                   month == select_month) %>%
+     dplyr::filter(mode == select_mode) %>%
      dplyr::select(cost)
 
    age<-cod_catch_data  %>%
-     dplyr::filter(mode == select_mode,
-                   month == select_month) %>%
+     dplyr::filter(mode == select_mode) %>%
      dplyr::select(age)
 
    avidity<-cod_catch_data  %>%
-     dplyr::filter(mode == select_mode,
-                   month == select_month) %>%
+     dplyr::filter(mode == select_mode) %>%
      dplyr::select(days_fished)
 
   cod_catch_data <- cod_catch_data %>%
@@ -129,8 +142,7 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
     #               bsb_tot_cat = tot_cat_bsb,
     #               scup_tot_cat = tot_cat_scup)  %>%
     # dplyr::rename(mode = mode1) %>%
-    dplyr::mutate(day = as.numeric(stringr::str_extract(day, "\\d+")),
-                  period2 = paste0(month, "_", day, "_", mode)) %>%
+    # %>%
     dplyr::group_by(period2) %>%
     dplyr::slice_sample(n = n_drawz*n_catch_draws, replace = TRUE)   %>%
     dplyr::mutate(#period = rep(period_vec$period2, each = nsamp),
@@ -969,7 +981,7 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_month, 
                         run_number = k,
                         n_choice_occasions = c(sum(pds_new_all$n_choice_occasions)),
                         Total_estimated_trips = c(sum(pds_new_all$estimated_trips)),
-                        month = c(select_month, select_month))
+                        open_season = c(select_season, select_season))
   }
 
 

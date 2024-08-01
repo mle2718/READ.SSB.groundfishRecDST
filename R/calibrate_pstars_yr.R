@@ -1,20 +1,73 @@
 ## calibrate_pstars
 library(magrittr)
 
-select_mode = "sh"
-select_season = 1
-k = 1
+p_star_cod = 0.5
+p_star_had = 0.5
+select_mode = "fh"
+k = 36
 directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
 catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
-MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
-pstar_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/pstars"
+MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_month.csv"
 
-pds_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_1.rds")))
-costs_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_1.rds")))
+calibrate_pstars_yr <- function(p_star_cod, p_star_had, select_mode, k,
+                             directed_trips_file_path, catch_draws_file_path, MRIP_comparison){
 
-calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_season,
-                             directed_trips_file_path, catch_draws_file_path, pstar_file_path){
+  MRIP_data <-   read.csv(file.path(paste0(MRIP_comparison)))%>%
+    dplyr::filter(mode == select_mode,
+                  draw == k )
 
+  MRIP_data<- MRIP_data %>%
+    dplyr::summarise(tot_cod_keep = sum(tot_cod_keep),
+                     tot_cod_rel = sum(tot_cod_rel),
+                     tot_cod_catch = sum(tot_cod_catch),
+                     tot_hadd_keep = sum(tot_hadd_keep),
+                     tot_hadd_rel = sum(tot_hadd_rel),
+                     tot_hadd_catch = sum(tot_hadd_catch),
+                     dtrip = sum(dtrip)) %>%
+    dplyr::mutate(mode = select_mode,
+                  draw = k)
+
+  if (length(MRIP_data$dtrip) == 0) {
+    p_stars <- data.frame(species = c("COD", "HAD"),
+                          p_star_value = c(1,1),
+                          mode = c(select_mode, select_mode),
+                          tot_keep_model = c(0,0),
+                          tot_rel_model = c(0, 0),
+                          tot_catch_model = c(0, 0),
+                          harvest_MRIP = c(0, 0),
+                          release_MRIP = c(0, 0),
+                          catch_MRIP = c(0, 0),
+                          harvest_diff = c(NA, NA),
+                          rel_diff = c(NA, NA),
+                          tot_cat_diff = c(NA, NA),
+                          run_number = k,
+                          n_choice_occasions = c("NA"),
+                          Total_estimated_trips = c("NA"))
+  } else if (MRIP_data$dtrip == 0) {
+
+    cod_harvest_harv_diff<-((sum(MRIP_data$tot_cod_keep)-sum(0))/sum(MRIP_data$tot_cod_keep))*100
+    cod_rel_diff<- ((sum(MRIP_data$tot_cod_rel)-0)/sum(MRIP_data$tot_cod_rel))*100
+    cod_tot_cat_diff<-((sum(MRIP_data$tot_cod_catch)-0)/sum(MRIP_data$tot_cod_catch))*100
+    had_harvest_harv_diff<-((sum(MRIP_data$tot_hadd_keep)-0)/sum(MRIP_data$tot_hadd_keep))*100
+    had_rel_diff<- ((sum(MRIP_data$tot_hadd_rel)-0)/sum(MRIP_data$tot_hadd_rel))*100
+    had_tot_cat_diff<-((sum(MRIP_data$tot_hadd_catch)-0)/sum(MRIP_data$tot_hadd_catch))*100
+
+    p_stars <- data.frame(species = c("COD", "HAD"),
+                          p_star_value = c(1,1),
+                          mode = c(select_mode, select_mode),
+                          tot_keep_model = c(0,0),
+                          tot_rel_model = c(0, 0),
+                          tot_catch_model = c(0, 0),
+                          harvest_MRIP = c(sum(MRIP_data$tot_cod_keep), sum(MRIP_data$tot_hadd_keep)),
+                          release_MRIP = c(MRIP_data$tot_cod_rel, MRIP_data$tot_hadd_rel),
+                          catch_MRIP = c(MRIP_data$tot_cod_cacth, MRIP_data$tot_hadd_catch),
+                          harvest_diff = c(cod_harvest_harv_diff, had_harvest_harv_diff),
+                          rel_diff = c(cod_rel_diff, had_rel_diff),
+                          tot_cat_diff = c(cod_tot_cat_diff,had_tot_cat_diff),
+                          run_number = k,
+                          n_choice_occasions = c("NA"),
+                          Total_estimated_trips = c("NA"))
+  } else {
     print(k)
 
     n_drawz = 50
@@ -23,33 +76,18 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
     directed_trips<-read.csv(directed_trips_file_path) %>%
       tibble::tibble() %>%
       dplyr::filter(draw == k,
-                    mode == select_mode) %>%
-      dplyr::mutate(open = dplyr::case_when(cod_bag > 0 ~ 1, TRUE ~ 0))
-
-    # New_DTRIP <- read.csv(directed_trips_file_path)  %>%
-    #   dplyr::mutate(open = dplyr::case_when(cod_bag > 0 ~ 1, TRUE ~ 0)) %>%
-    #   dplyr::reframe(dtrip= sum(dtrip), .by = c(mode, open, draw))
+                    mode == select_mode)
 
 
-    open<- directed_trips %>%
-      dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
-                    period2 = paste0(month, "_", day, "_", mode)) %>%
-      dplyr::select(period2, open) %>%
-      dplyr::filter(open == select_season)
-
-
-    directed_trips<- directed_trips %>%
-      dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
-                    period2 = paste0(month, "_", day, "_", mode)) %>%
-      dplyr::filter(open == select_season)
     ######################################
     ##   Begin simulating trip outcomes ##
     ######################################
 
     # Set up an output file for the separately simulated within-season regulatory periods
     directed_trips_p <- directed_trips %>%
-      dplyr::mutate(month = as.numeric(month)) %>%
-      #dplyr::mutate(period2 = as.character(paste0(month, "_", day, "_", mode))) %>% #make day of year and mode combo
+      dplyr::mutate(day = as.numeric(stringr::str_extract(day, "^\\d{2}")),
+                    month = as.numeric(month)) %>%
+      dplyr::mutate(period2 = as.character(paste0(month, "_", day, "_", mode))) %>% #make day of year and mode combo
       #group_by(period) %>%
       dplyr::mutate(#n_trips = floor(mean(dtrip_2019)),
         n_trips = floor(dtrip),
@@ -61,23 +99,19 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
                     cod_bag,
                     cod_min,
                     hadd_bag,
-                    hadd_min)
+                    hadd_min )
 
     param_draws <- directed_trips_p %>%
-      dplyr::select(period2, n_draws, open) %>%
+      dplyr::select(period2, n_draws) %>%
       tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
     cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
-      dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
-                    period2 = paste0(month, "_", day, "_", mode)) %>%
-      dplyr::left_join(open, by = "period2") %>%
-      dplyr::filter(open == select_season) %>%
-      dplyr::select(!open, !day) %>%
+      dplyr::filter(mode == select_mode) %>%
       dplyr::rename(tot_cod_catch = cod_catch,
                     tot_had_catch = hadd_catch,
                     keep_cod =  cod_keep,
                     keep_had =  hadd_keep)  %>%
-      dplyr::select(mode,month,tot_cod_catch,keep_cod,cod_rel,tot_had_catch,keep_had,hadd_rel,
+      dplyr::select(mode,month, tot_cod_catch,keep_cod,cod_rel,tot_had_catch,keep_had,hadd_rel,
                     tripid,catch_draw,day, draw, age, days_fished, cost)
 
     trip_costs<-cod_catch_data  %>%
@@ -104,27 +138,22 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
       dplyr::mutate(#period = rep(period_vec$period2, each = nsamp),
         catch_draw = rep(1:n_catch_draws, length.out = n_drawz*n_catch_draws),
         tripid = rep(1:n_drawz, each=n_catch_draws)) %>%
-      dplyr::ungroup()%>%
+      dplyr::ungroup() %>%
       dplyr::select(!c(age, days_fished, cost))%>%
       dplyr::select(!c(month, mode))
     print("postmutate")
 
 
-    if(select_season == 1){
-    seas = "open"
-    }
-    if(select_season == 0){
-      seas = "closed"
-    }
-    pstar<- read.csv(file.path(here::here(paste0(pstar_file_path, "/pstar_", select_mode, "_",seas, ".csv")))) %>%
-      dplyr::filter(run_number == k)
-    p_star_cod <- pstar %>%
-      dplyr::filter(species == "COD")
-    p_star_cod <- p_star_cod$p_star_value
-
-    p_star_had <- pstar %>%
-      dplyr::filter(species == "HAD")
-    p_star_had <- p_star_had$p_star_value
+    # pstar<- read.csv(file.path(here::here(paste0("pstars/pstar_test1.csv")))) %>%
+    #   dplyr::filter(mode == select_mode,
+    #                 run_number == k)
+    # p_star_cod <- pstar %>%
+    #   dplyr::filter(species == "COD")
+    # p_star_cod <- p_star_cod$p_star_value
+    #
+    # p_star_had <- pstar %>%
+    #   dplyr::filter(species == "HAD")
+    # p_star_had <- p_star_had$p_star_value
 
 
 
@@ -381,7 +410,6 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
     if (had_catch_check!=0){
       # subset trips with zero catch, as no size draws are required
       had_zero_catch <- dplyr::filter(cod_had_catch_data, tot_had_catch == 0)
-
       #remove trips with zero summer flounder catch
       #sf_catch_data=sf_catch_data[sf_catch_data$tot_sf_catch!=0, ]
       had_catch_data <- dplyr::filter(cod_had_catch_data, tot_had_catch > 0)
@@ -674,9 +702,7 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
                     tot_rel_cod_base = tot_rel_cod,
                     tot_keep_had_base = tot_keep_had,
                     tot_rel_had_base = tot_rel_had)%>%
-      dplyr::mutate(n_cal_draw = k,
-                    mode = select_mode,
-                    open = select_season)
+      dplyr::mutate(n_cal_draw = k)
 
 
     #  utility (prediction year)
@@ -696,7 +722,7 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
     period_names <- period_names[!duplicated(period_names), ]
 
 
-    mean_trip_data <- trip_data %>% data.table::data.table() #%>% dplyr::arrange(period, tripid, catch_draw)
+    mean_trip_data <- trip_data %>% data.table::data.table()
 
     #mean_trip_data<-mean_trip_data %>% dplyr::arrange(period, tripid, catch_draw)
 
@@ -753,8 +779,6 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
 
     all_vars<-c()
     all_vars <- names(mean_trip_data)[!names(mean_trip_data) %in% c("period2","tripid")]
-
-
 
 
     mean_trip_data<-mean_trip_data  %>% data.table::as.data.table() %>%
@@ -888,18 +912,70 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
     names(aggregate_trip_data)[names(aggregate_trip_data) == "probA"] = "estimated_trips"
     pds_new_all<-aggregate_trip_data %>%
       #dplyr::left_join(aggragate_length_data, by = "period2") %>%
-      dplyr::mutate(n_cal_draw = k,
-                    mode = select_mode,
-                    open = select_season)
+      dplyr::mutate(n_cal_draw = k)
 
     output<-list(pds_new_all, costs_new_all)
     #write.csv(pds_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/pds_new_all_", select_mode, "_", k, ".csv")))
     #write.csv(costs_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/costs_new_all_", select_mode, "_", k, ".csv")))
     #return(output)
-  return(output)
 
+    # Calucate_Pstar
+
+
+
+    ##COd
+    sum(pds_new_all$tot_keep_cod)
+    sum(MRIP_data$tot_cod_keep)
+    cod_harvest_harv_diff<-((sum(MRIP_data$tot_cod_keep)-sum(pds_new_all$tot_keep_cod))/sum(MRIP_data$tot_cod_keep))*100
+    cod_harvest_harv_diff
+
+    sum(pds_new_all$tot_rel_cod)
+    sum(MRIP_data$tot_cod_rel)
+    cod_rel_diff<- ((sum(MRIP_data$tot_cod_rel)-sum(pds_new_all$tot_rel_cod))/sum(MRIP_data$tot_cod_rel))*100
+    cod_rel_diff
+
+    sum(pds_new_all$tot_cod_catch)
+    sum(MRIP_data$tot_cod_catch)
+    cod_tot_cat_diff<-((sum(MRIP_data$tot_cod_catch)-sum(pds_new_all$tot_cod_catch))/sum(MRIP_data$tot_cod_catch))*100
+    cod_tot_cat_diff
+
+    ##Haddock
+    sum(pds_new_all$tot_keep_had)
+    sum(MRIP_data$tot_hadd_keep)
+    had_harvest_harv_diff<-((sum(MRIP_data$tot_hadd_keep)-sum(pds_new_all$tot_keep_had))/sum(MRIP_data$tot_hadd_keep))*100
+    had_harvest_harv_diff
+
+    sum(pds_new_all$tot_rel_had)
+    sum(MRIP_data$tot_hadd_rel)
+    had_rel_diff<- ((sum(MRIP_data$tot_hadd_rel)-sum(pds_new_all$tot_rel_had))/sum(MRIP_data$tot_hadd_rel))*100
+    had_rel_diff
+
+    sum(pds_new_all$tot_had_catch)
+    sum(MRIP_data$tot_hadd_catch)
+    had_tot_cat_diff<-((sum(MRIP_data$tot_hadd_catch)-sum(pds_new_all$tot_had_catch))/sum(MRIP_data$tot_hadd_catch))*100
+    had_tot_cat_diff
+
+
+    p_stars <- data.frame(species = c("COD", "HAD"),
+                          p_star_value = c(p_star_cod,p_star_had),
+                          mode = c(select_mode, select_mode),
+                          tot_keep_model = c(sum(pds_new_all$tot_keep_cod), sum(pds_new_all$tot_keep_had)),
+                          tot_rel_model = c(sum(pds_new_all$tot_rel_cod), sum(pds_new_all$tot_rel_had)),
+                          tot_catch_model = c(sum(pds_new_all$tot_cod_catch), sum(pds_new_all$tot_had_catch)),
+                          harvest_MRIP = c(sum(MRIP_data$tot_cod_keep), sum(MRIP_data$tot_hadd_keep)),
+                          release_MRIP = c(MRIP_data$tot_cod_rel, MRIP_data$tot_hadd_rel),
+                          catch_MRIP = c(MRIP_data$tot_cod_cacth, MRIP_data$tot_hadd_catch),
+                          harvest_diff = c(cod_harvest_harv_diff, had_harvest_harv_diff),
+                          rel_diff = c(cod_rel_diff, had_rel_diff),
+                          tot_cat_diff = c(cod_tot_cat_diff,had_tot_cat_diff),
+                          run_number = k,
+                          n_choice_occasions = c(sum(pds_new_all$n_choice_occasions)),
+                          Total_estimated_trips = c(sum(pds_new_all$estimated_trips)))
+  }
+
+
+  return(p_stars)
 }
-
 
 
 
