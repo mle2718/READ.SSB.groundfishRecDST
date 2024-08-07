@@ -112,7 +112,11 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season,
     tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
   cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
-    dplyr::mutate(day = as.numeric(stringr::str_extract(day, "\\d+")),
+    dplyr::mutate(month = stringr::str_sub(day, 3, 5),
+                  month = dplyr::recode(month, jan = 1, feb = 2, mar = 3, apr = 4,
+                                        may = 5, jun = 6, jul = 7, aug = 8,
+                                        sep = 9, oct = 10, nov = 11, dec = 12),
+                  day = as.numeric(stringr::str_extract(day, "\\d+")),
                   period2 = paste0(month, "_", day, "_", mode)) %>%
     dplyr::left_join(open, by = "period2") %>%
     dplyr::filter(open == select_season) %>%

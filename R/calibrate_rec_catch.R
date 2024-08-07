@@ -2,7 +2,7 @@
 library(magrittr)
 
 select_mode = "sh"
-select_season = 1
+select_season = 0
 k = 1
 directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
 catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
@@ -13,8 +13,29 @@ pds_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codha
 costs_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_1.rds")))
 
 calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_season,
-                             directed_trips_file_path, catch_draws_file_path, pstar_file_path){
+                             directed_trips_file_path, catch_draws_file_path, MRIP_comparison, pstar_file_path){
 
+  print(select_mode)
+  print(select_season)
+  MRIP_data <-   read.csv(file.path(paste0(MRIP_comparison)))%>%
+    dplyr::filter(mode == select_mode,
+                  open == select_season,
+                  draw == k )
+
+  if (MRIP_data$dtrip == 0) {
+    pds_new_all<- data.frame(period2 = NA, tot_keep_cod = 0, tot_keep_had = 0,
+                             tot_rel_cod = 0, tot_rel_had = 0, tot_cod_catch = 0,
+                             tot_had_catch = 0, estimated_trips = 0, n_choice_occasions = 0,
+                             n_cal_draw = NA, mode = NA)
+
+    costs_new_all<- data.frame(tripid = NA, cost = NA, catch_draw = NA, tot_keep_cod_base = NA,
+                               tot_rel_cod_base = NA, age = NA,days_fished = NA,beta_opt_out_age = NA,
+                               beta_opt_out_likely = NA,beta_opt_out_prefer = NA,tot_keep_had_base = NA,tot_rel_had_base = NA,
+                               beta_cost = NA,beta_opt_out = NA,beta_sqrt_hadd_keep = NA,beta_sqrt_hadd_release = NA,
+                               beta_sqrt_cod_hadd_keep = NA,beta_sqrt_cod_keep = NA,beta_sqrt_cod_release = NA,period2 = NA,
+                               n_cal_draw = NA,mode = select_mode, open = select_season)
+    output<-list(pds_new_all, costs_new_all)
+  } else {
     print(k)
 
     n_drawz = 50
@@ -68,7 +89,12 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
       tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
     cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
-      dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
+      dplyr::mutate(month = stringr::str_sub(day, 3, 5),
+                    month = dplyr::recode(month, jan = 1, feb = 2, mar = 3, apr = 4,
+                                          may = 5, jun = 6, jul = 7, aug = 8,
+                                          sep = 9, oct = 10, nov = 11, dec = 12),
+                    day = as.numeric(stringr::str_extract(day, '\\d{2}')) ,
+
                     period2 = paste0(month, "_", day, "_", mode)) %>%
       dplyr::left_join(open, by = "period2") %>%
       dplyr::filter(open == select_season) %>%
@@ -93,10 +119,6 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
       dplyr::select(days_fished)
 
     cod_catch_data <- cod_catch_data %>%
-      # dplyr::rename(sf_tot_cat = tot_cat_sf,
-      #               bsb_tot_cat = tot_cat_bsb,
-      #               scup_tot_cat = tot_cat_scup)  %>%
-      # dplyr::rename(mode = mode1) %>%
       dplyr::mutate(day = as.numeric(stringr::str_extract(day, "\\d+")),
                     period2 = paste0(month, "_", day, "_", mode)) %>%
       dplyr::group_by(period2) %>%
@@ -896,6 +918,7 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
     #write.csv(pds_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/pds_new_all_", select_mode, "_", k, ".csv")))
     #write.csv(costs_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/costs_new_all_", select_mode, "_", k, ".csv")))
     #return(output)
+  }
   return(output)
 
 }
