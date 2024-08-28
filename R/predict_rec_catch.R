@@ -1,29 +1,35 @@
-#
-
-# pkgs_to_use <- c("tidyr",  "magrittr", "tidyverse", "reshape2", "splitstackshape","doBy","WriteXLS","Rcpp",
-#                  "ggplot2","dplyr","rlist","fitdistrplus","MASS","psych","rgl","copula","VineCopula","scales",
-#                  "univariateML","logspline","readr","data.table","conflicted", "readxl", "writexl", "fs",
-#                  "purrr", "readr", "here","plyr" , "furrr", "profvis", "future")
-# install.packages(setdiff(pkgs_to_use, rownames(installed.packages())))
-# lapply(pkgs_to_use, library, character.only = TRUE, quietly = TRUE)
-# conflicts_prefer(dplyr::mutate)
-# options(scipen = 100, digits = 3)
-
-library(magrittr)
-x = 1
-select_season = 1
-calibration_data_table =  readr::read_rds(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_", select_season, "_", k, ".rds")))
-directed_trips_table =  read.csv("C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv")
-size_data_read = read.csv("C:/Users/kimberly.bastille/Desktop/codhad_data/projected_CaL_cod_hadd_open_season_test.csv")
-costs_new_all =  readr::read_rds(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_",select_season, "_", k, ".rds"))
-catch_data_all = read.csv(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws", k, ".csv"))
-#l_w_conversion =
-n_drawz = 50
-n_catch_draws = 30
-eff_seed=130
+#'Predict Recreational Catch
+#'
+#'@description Predict recreational catch for either status-quo or alternative estimates of harvest, discards, effort, and angler welfare.
+#'
+#'@param Inputs include p_star_cod (value between 0:1), p_star_had (value between 0:1), select_mode (Private ("pr"), Shore ("sh"), or For-Hire ("fh")),
+#'      k (numeric value in loop used to calculate all simulations), select_season (numeric value meaning indicating either open (1) or closed (0)),
+#'      directed_trips_file_path (file path character), catch_draws_file_path (file path character), MRIP_comparison (csv) , pstar_file_path (file path character)
+#'
+#'
+#'@export predict_rec_catch
+#'
+#'@returns A data frame containing the estimates of harvest, discards, effort, and angler welfare for the regulations in the directed trips file.
+#'
+#'@examples
 
 
-predict_rec_catch_season <- function( x, select_season,  calibration_data_table,
+##################################### testing ################################################################################
+# library(magrittr)
+# x = 1
+# select_season = 1
+# calibration_data_table =  readr::read_rds(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_", select_season, "_", k, ".rds")))
+# directed_trips_table =  read.csv("C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv")
+# size_data_read = read.csv("C:/Users/kimberly.bastille/Desktop/codhad_data/projected_CaL_cod_hadd_open_season_test.csv")
+# costs_new_all =  readr::read_rds(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_",select_season, "_", k, ".rds"))
+# catch_data_all = read.csv(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws", k, "_test.csv"))
+# #l_w_conversion =
+# n_drawz = 50
+# n_catch_draws = 30
+# eff_seed=130
+################################################################################################################################
+
+predict_rec_catch <- function( x, select_season,  calibration_data_table,
                                   directed_trips_table,
                                   size_data_read,
                                   costs_new_all,
@@ -127,7 +133,11 @@ predict_rec_catch_season <- function( x, select_season,  calibration_data_table,
   #contained in the costs_new_all files
 
   cod_catch_data <-  catch_data_all%>%
-    dplyr::mutate(day = as.numeric(stringr::str_extract(day, '\\d{2}')),
+    dplyr::mutate(month = stringr::str_sub(day, 3, 5),
+                  month = dplyr::recode(month, jan = 1, feb = 2, mar = 3, apr = 4,
+                                        may = 5, jun = 6, jul = 7, aug = 8,
+                                        sep = 9, oct = 10, nov = 11, dec = 12),
+                  day = as.numeric(stringr::str_extract(day, '\\d{2}')) ,
                   period2 = paste0(month, "_", day, "_", mode))
 
 

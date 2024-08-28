@@ -1,7 +1,6 @@
+library(magrittr)
 
-k = 1
-
-for(k in 1:10){
+for(k in 1:150){
   for(i in 0:1){
   calibration_fh<- calibrate_rec_catch(select_mode = "fh",
                                        k = k, select_season = i,
@@ -36,4 +35,5 @@ for(k in 1:10){
 
   saveRDS(pds_new_all, file = paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_",i,"_",k,".rds"))
   saveRDS(costs_new_all, file = paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_",i,"_",k,".rds"))
-}}
+  }
+  }

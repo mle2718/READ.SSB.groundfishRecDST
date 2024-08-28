@@ -1,16 +1,38 @@
+#'Calibrate Recreational Catch
+#'
+#'@description Calculate recreational catch to produce costs (costs_new_all) and periods (pds_new_all) files.
+#'
+#'@param Inputs include p_star_cod (value between 0:1), p_star_had (value between 0:1), select_mode (Private ("pr"), Shore ("sh"), or For-Hire ("fh")),
+#'      k (numeric value in loop used to calculate all simulations), select_season (numeric value meaning indicating either open (1) or closed (0)),
+#'      directed_trips_file_path (file path character), catch_draws_file_path (file path character), MRIP_comparison (csv) , pstar_file_path (file path character)
+#'
+#'
+#'@export calibrate_rec_catch
+#'
+#'@return
+#'
+#'
+#'@examples
+#'library(ggplot2)
+
+
+
+
+
+
 ## calibrate_pstars
-library(magrittr)
+#library(magrittr)
 
-select_mode = "sh"
-select_season = 0
-k = 1
-directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
-catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
-MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
-pstar_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/pstars"
-
-pds_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_1.rds")))
-costs_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_1.rds")))
+# select_mode = "pr"
+# select_season = 1
+# k = 1
+# directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
+# catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
+# MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
+# pstar_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/pstars"
+#
+# pds_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/pds_new_all_1.rds")))
+# costs_test <-   readRDS(file.path(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/calibration/cost_new_all_1.rds")))
 
 calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_season,
                              directed_trips_file_path, catch_draws_file_path, MRIP_comparison, pstar_file_path){
@@ -88,7 +110,7 @@ calibrate_rec_catch <- function(p_star_cod, p_star_had, select_mode, k, select_s
       dplyr::select(period2, n_draws, open) %>%
       tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
-    cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
+    cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, "_full.csv"))) %>%
       dplyr::mutate(month = stringr::str_sub(day, 3, 5),
                     month = dplyr::recode(month, jan = 1, feb = 2, mar = 3, apr = 4,
                                           may = 5, jun = 6, jul = 7, aug = 8,

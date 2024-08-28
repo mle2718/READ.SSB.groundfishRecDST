@@ -1,14 +1,14 @@
 ## calibrate_pstars
-library(magrittr)
-
- p_star_cod = 0.5
- p_star_had = 0.5
- select_mode = "fh"
- select_season = 1
- k = 36
- directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
- catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
- MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
+# library(magrittr)
+#
+#  p_star_cod = 0.5
+#  p_star_had = 0.5
+#  select_mode = "fh"
+#  select_season = 1
+#  k = 36
+#  directed_trips_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/directed_trips/directed_trips_calib_150draws.csv"
+#  catch_draws_file_path = "C:/Users/kimberly.bastille/Desktop/codhad_data/catch_draws/catch_draws"
+#  MRIP_comparison = "C:/Users/kimberly.bastille/Desktop/codhad_data/simulated_catch_totals_open_season.csv"
 
 calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season, k,
                              directed_trips_file_path, catch_draws_file_path, MRIP_comparison){
@@ -111,7 +111,7 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season,
     dplyr::select(period2, n_draws) %>%
     tidyr::uncount(n_draws) # %>% mutate(sample_id=1:nrow(period_vec))
 
-  cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, ".csv"))) %>%
+  cod_catch_data <- read.csv(file.path(paste0(catch_draws_file_path, k, "_full.csv"))) %>%
     dplyr::mutate(month = stringr::str_sub(day, 3, 5),
                   month = dplyr::recode(month, jan = 1, feb = 2, mar = 3, apr = 4,
                                         may = 5, jun = 6, jul = 7, aug = 8,
@@ -929,8 +929,8 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season,
     dplyr::mutate(n_cal_draw = k)
 
   output<-list(pds_new_all, costs_new_all)
-  #write.csv(pds_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/pds_new_all_", select_mode, "_", k, ".csv")))
-  #write.csv(costs_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/costs_new_all_", select_mode, "_", k, ".csv")))
+
+
   #return(output)
 
   # Calucate_Pstar
@@ -969,6 +969,11 @@ calibrate_pstars <- function(p_star_cod, p_star_had, select_mode, select_season,
   had_tot_cat_diff<-((sum(MRIP_data$tot_hadd_catch)-sum(pds_new_all$tot_had_catch))/sum(MRIP_data$tot_hadd_catch))*100
   had_tot_cat_diff
 
+  if((p_star_cod == 0 | (abs(cod_harvest_harv_diff)<2) ) &
+     (p_star_had == 0 | (abs(had_harvest_harv_diff)<2) )){
+    write.csv(pds_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/pds_new_all_", select_mode, "_", select_season, "_", k, ".csv")))
+    write.csv(costs_new_all, file = here::here(paste0("C:/Users/kimberly.bastille/Desktop/codhad_data/out/costs_new_all_", select_mode, "_", select_season, "_", k, ".csv")))
+  }
 
   p_stars <- data.frame(species = c("COD", "HAD"),
                         p_star_value = c(p_star_cod,p_star_had),
