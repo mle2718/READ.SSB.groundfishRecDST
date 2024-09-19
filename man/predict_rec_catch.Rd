@@ -6,12 +6,11 @@
 \usage{
 predict_rec_catch(
   x,
-  select_season,
-  calibration_data_table,
   directed_trips_table,
-  size_data_read,
+  calibration_data_table,
   costs_new_all,
   catch_data_all,
+  discard_mortality_dat,
   n_drawz = 50,
   n_catch_draws = 30,
   eff_seed = 130
@@ -22,9 +21,9 @@ predict_rec_catch(
 k (numeric value in loop used to calculate all simulations), select_season (numeric value meaning indicating either open (1) or closed (0)),
 directed_trips_file_path (file path character), catch_draws_file_path (file path character), MRIP_comparison (csv) , pstar_file_path (file path character)}
 }
-\value{
-A data frame containing the estimates of harvest, discards, effort, and angler welfare for the regulations in the directed trips file.
-}
 \description{
-Predict recreational catch for either status-quo or alternative estimates of harvest, discards, effort, and angler welfare.
+Calculate recreational catch to produce prediction dataframe files.
+}
+\examples{
+library(ggplot2)
 }
