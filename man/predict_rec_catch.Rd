@@ -8,6 +8,7 @@ predict_rec_catch(
   x,
   directed_trips_table,
   calibration_data_table,
+  size_data_read,
   costs_new_all,
   catch_data_all,
   discard_mortality_dat,
