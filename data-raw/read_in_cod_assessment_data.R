@@ -6,7 +6,7 @@
 # This code does just 1 projection.
 # 2) 75%Fmsy 2025-2027 (potential ABCs)
 # Bridging is done by picking the last row of "agg_catch" from the projection
-#      inputs for 2023 and by setting F=75%FMSY in 2024
+# for 2023 and 2024
 # This is pretty standard.
 # Some inputs to ASAP are scalars, some are vectors, and some are matrices.
 # I use tail(.x, 1) to pick the last "thing" of a vector or matrix, which is usually the final year of data.
@@ -77,8 +77,11 @@ periods<-12 # there are 12 months in a year
 YearProj<-2025
 num_NAA_draws<-10000
 
+
+FullProjectionsSaveFile<-paste0("WGOMCod_Projections_", Sys.Date(), ".rds")
+
 ProjectedNAASaveFile<-"WGOM_Cod_projected_NAA_2024Assessment.dta"
-HistoricalNAASaveFile<-"WGOM_COD_historical_NAA_2024Assessment.dta"
+HistoricalNAASaveFile<-"WGOM_Cod_historical_NAA_2024Assessment.dta"
 
 
 
@@ -239,7 +242,7 @@ proj_out <-
 ################################################################################
 ################################################################################
 # Save the full set of projections
-saveRDS(proj_list, file = here("results",paste0("Projections_", Sys.Date(), ".rds")))
+saveRDS(proj_list, file = here("results",FullProjectionsSaveFile))
 ################################################################################
 ################################################################################
 
@@ -265,13 +268,15 @@ NAA_logsd<-std1[[2]]$log_NAA_rep[1,1,,]
 #column names
 names<-paste0("age",1:ncol(NAA_logmean))
 
+TerminalAssess<-tail(mod$years_full,1)
+
 # Construct a dataframe of historical Numbers at Age
 historical_NAA<-exp(NAA_logmean)
 colnames(historical_NAA)<-names
 historical_NAA<-as.data.frame(cbind(Year,historical_NAA))
 
 historical_NAA <- historical_NAA %>%
-  dplyr::filter(Year<YearProj)
+  dplyr::filter(Year<=TerminalAssess)
 
 write_dta(historical_NAA, path=here("results",HistoricalNAASaveFile))
 
