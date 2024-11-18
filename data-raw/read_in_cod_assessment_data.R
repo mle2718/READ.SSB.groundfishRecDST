@@ -171,8 +171,8 @@ set_specs <- function(mod) {
     list(Model = rep(mod$model_name, times = 1),
          scenario    = c("0.75Fmsy (2025-2027)"), #CP's scenario 2. This is just a string. 
          n.yrs       = rep(list(4), times = 1),   # Number of years is set in in (list(numyears)). Number of scenarios is set with times=
-         proj_F_opt  = list(c(5, 4, 4, 4)),  # length=numyears.  stack on different things to make different projections
-         proj_Fcatch = list(c(bridge, rep(0.75 * Fmsy, 3))) #2 # length=numyears
+         proj_F_opt  = list(c(5, 5, 4, 4)),  # length=numyears.  stack on different things to make different projections
+         proj_Fcatch = list(c(bridge, bridge, rep(0.75 * Fmsy, 2))) #2 # length=numyears
     )
 }
 
