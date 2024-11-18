@@ -1,11 +1,11 @@
 ###################################################
-### Code to read in WGOM Cod Stock assessment data provided by Charles Peretti. 
+### Code to read in WGOM Cod Stock assessment data provided by Charles Peretti.
 # The terminal year of this stock assessment is 2023.
-# The bioeconomic model needs a few parameters that go into the stock assessment. 
+# The bioeconomic model needs a few parameters that go into the stock assessment.
 # It also needs some parameters that come out of the stock assessment.
 # This code does just 1 projection.
 # 2) 75%Fmsy 2025-2027 (potential ABCs)
-# Bridging is done by picking the last row of "agg_catch" from the projection 
+# Bridging is done by picking the last row of "agg_catch" from the projection
 #      inputs for 2023 and by setting F=75%FMSY in 2024
 # This is pretty standard.
 # Some inputs to ASAP are scalars, some are vectors, and some are matrices.
@@ -15,34 +15,34 @@
 # Individual weights (Weights at age vectors) are in kg
 
 
-############ 
+############
 # Parameters that go into the stock assessment
 # Fraction of year that elapses before SSB Calculation (Jan1=0.0)
-# Natural Mortality -- note that in the original blast model, this is a scalar. 
+# Natural Mortality -- note that in the original blast model, this is a scalar.
   # In ASAP, this is specified as a vector of M at age, which is stacked into a T by A matrix (T is number of years and A is number of Age classes)
 
-############  
+############
 # Parameters that come out of the stock assessment
 # Weights at age
-############ 
+############
 # The WGOM cod stock assessment has 2 fleets, Commercial and recreational.  There is also a 'blended' fleet.
 
 #BLAST 1.0 uses these 1xA row vectors.
 # cod_jan1_weights
 # cod_midyear_weights
-# cod_catch_weights 
+# cod_catch_weights
 # cod_ssb_weights
 # cod_discard_weights
 # cod_discard_fraction not in the model for commercial
-# cod_maturity 
+# cod_maturity
 
-# Historical NAA comes out of the WHAM stock assessment. 
+# Historical NAA comes out of the WHAM stock assessment.
 
-###### 
+######
 # Parameters that come out of the projections
-###### 
-# Numbers at age (in the future).  There isn't a stochastic projection for WGOM 
-# cod.  WGOM Cod NAA are assumed to be lognormally distributed with a mean and sd parameters.   
+######
+# Numbers at age (in the future).  There isn't a stochastic projection for WGOM
+# cod.  WGOM Cod NAA are assumed to be lognormally distributed with a mean and sd parameters.
 # I use rlnorm() to generate a distribution
 
 
@@ -51,7 +51,7 @@
 ###################################################
 
 
-# install the version of wham that was used to do the initial estimation.  
+# install the version of wham that was used to do the initial estimation.
 # pak::pak("timjmiller/wham@cc1264219b07dbaf07ff07e6e6d549b44addab28")
 
 library(here)
@@ -60,7 +60,7 @@ library(wham)
 library(haven)
 
 
-here::i_am("R/read_in_cod_assessment_data.R")
+here::i_am("data-raw/read_in_cod_assessment_data.R")
 
 ################################################################################
 ################################################################################
@@ -84,9 +84,9 @@ HistoricalNAASaveFile<-"WGOM_COD_historical_NAA_2024Assessment.dta"
 
 # I use tail(.x, 1) to pick the last "thing" out of the ASAP input file
 
-############ 
+############
 # Parameters that go into the stock assessment
-############  
+############
 # Fraction of year that elapses before SSB Calculation (Jan1=0.0)
 cMp1=asap3[[1]]$dat$fracyr_spawn
 cFp1=cMp1
@@ -97,9 +97,9 @@ cM=cMyr/periods
 
 
 
-############  
+############
 # Parameters that come out of the stock assessment
-############ 
+############
 # Weights at age. Opem the ASAP3 file in the ASAP gui and pick through the pointers.
 # cod_jan1_weights=  Matrix 3 for Jan 1
 cod_jan1_weights = tail(asap3[[1]]$dat$WAA_mats[[3]],1)
@@ -119,11 +119,11 @@ cod_discard_weights = tail(asap3[[1]]$dat$WAA_mats[[1]],1)
 
 # cod_discard_fraction not in the model for commercial
 cod_discard_fraction<-cod_discard_weights*0
-# cod_maturity 
+# cod_maturity
 cod_maturity= tail(asap3[[1]]$dat$maturity,1)
 
-# These parameters aren't actually saved anywhere, because I'm not 100% sure of 
-# the easiest way to save them. 
+# These parameters aren't actually saved anywhere, because I'm not 100% sure of
+# the easiest way to save them.
 
 
 
@@ -157,19 +157,19 @@ set_specs <- function(mod) {
 
   # This is a mini-projection done if you wanted to get the catch in 2025 that
   # results from 75%FMSY and then apply that constant amount in the future.
-  # catch2025 <- 
-  #   project_wham(model = mod, 
+  # catch2025 <-
+  #   project_wham(model = mod,
   #                proj.opts = list(n.yrs = 2,
   #                                 proj_F_opt = c(5, 4),
   #                                 proj_Fcatch = c(bridge, 0.75 * Fmsy)),
   #                do.sdrep = F, MakeADFun.silent = T)$rep$
   #   pred_catch[mod$env$data$n_years_model + 2, ] %>%
   #   sum()
-  
-  
-  proj.opts_list <- 
+
+
+  proj.opts_list <-
     list(Model = rep(mod$model_name, times = 1),
-         scenario    = c("0.75Fmsy (2025-2027)"), #CP's scenario 2. This is just a string. 
+         scenario    = c("0.75Fmsy (2025-2027)"), #CP's scenario 2. This is just a string.
          n.yrs       = rep(list(4), times = 1),   # Number of years is set in in (list(numyears)). Number of scenarios is set with times=
          proj_F_opt  = list(c(5, 5, 4, 4)),  # length=numyears.  stack on different things to make different projections
          proj_Fcatch = list(c(bridge, bridge, rep(0.75 * Fmsy, 2))) #2 # length=numyears
@@ -186,9 +186,9 @@ proj.opts_list2 <- map_df(mod_list, .f = set_specs)
 proj_list <- list()
 mod_names <- map_df(mod_list, .f = function(x) data.frame(model_name = x$model_name))
 for(i in 1:length(proj.opts_list2$n.yrs)) {
-  
+
   mod_index <- which(mod_names$model_name == proj.opts_list2$Model[i])
-  
+
   proj_list[[i]] <-
     project_wham(model = mod_list[[mod_index]],
                  proj.opts = list(n.yrs = proj.opts_list2$n.yrs[[i]],
@@ -196,7 +196,7 @@ for(i in 1:length(proj.opts_list2$n.yrs)) {
                                   proj_Fcatch = proj.opts_list2$proj_Fcatch[[i]]),
                  do.sdrep = T,
                  MakeADFun.silent = T)
-  
+
   proj_list[[i]]$scenario <- proj.opts_list2$scenario[i]
   proj_list[[i]]$Model <- proj.opts_list2$Model[i]
 }
@@ -208,18 +208,18 @@ for(i in 1:length(proj.opts_list2$n.yrs)) {
 ################################################################################
 proj_out <-
   map_df(proj_list, .f = function(x) {
-    
-    std <- list(TMB:::as.list.sdreport(x$sdrep, what = "Est", report = TRUE), 
+
+    std <- list(TMB:::as.list.sdreport(x$sdrep, what = "Est", report = TRUE),
                 TMB:::as.list.sdreport(x$sdrep, what = "Std", report = TRUE))
-    
+
     logssb <- std[[1]]$log_SSB
     logssb_sd <- std[[2]]$log_SSB
     ssb <- exp(std[[1]]$log_SSB)[,1]
     ssb_90lo <- exp(logssb - qnorm(0.95) * logssb_sd)[,1]
     ssb_90hi <- exp(logssb + qnorm(0.95) * logssb_sd)[,1]
-    
-    
-    out <- 
+
+
+    out <-
       tibble(Model = x$Model,
              scenario = x$scenario,
              Year = x$years_full,
@@ -232,7 +232,7 @@ proj_out <-
              `Catch (Total)` = `Catch (Com.)` + `Catch (Rec.)`) %>%
   filter(Year >= 2023) %>%
   rename(`Projection scenario` = scenario)
-    
+
     return(out)
   })
 
@@ -250,7 +250,7 @@ saveRDS(proj_list, file = here("results",paste0("Projections_", Sys.Date(), ".rd
 ################################################################################
 ################################################################################
 #This pulls objects out of the sdreport.
-std1 <- list(TMB:::as.list.sdreport(proj_list[[1]]$sdrep, what = "Est", report = TRUE), 
+std1 <- list(TMB:::as.list.sdreport(proj_list[[1]]$sdrep, what = "Est", report = TRUE),
              TMB:::as.list.sdreport(proj_list[[1]]$sdrep, what = "Std", report = TRUE))
 
 
@@ -284,7 +284,7 @@ stopifnot(length(RowPick)==1)
 
 
 
-#extract just 1 row 
+#extract just 1 row
 NAA_logmean<-NAA_logmean[RowPick,]
 NAA_logsd<-NAA_logsd[RowPick,]
 
