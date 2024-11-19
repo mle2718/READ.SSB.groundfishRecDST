@@ -266,7 +266,7 @@ ggplot(proj2plot %>% filter(variable %in% c("Catch (Total)", "SSB")),
 #This pulls objects out of the sdreport.
 std1 <- list(TMB:::as.list.sdreport(proj_list[[1]]$sdrep, what = "Est", report = TRUE),
              TMB:::as.list.sdreport(proj_list[[1]]$sdrep, what = "Std", report = TRUE))
-Year<-proj_list[[1]]$years_full
+year<-proj_list[[1]]$years_full
 
 # Extract the mean and std dev of log_NAA from the results.
 # the 1st dimension of this array contains stock, the second contains region.
@@ -283,17 +283,17 @@ TerminalAssess<-tail(mod$years_full,1)
 # Construct a dataframe of historical Numbers at Age
 historical_NAA<-exp(NAA_logmean)
 colnames(historical_NAA)<-names
-historical_NAA<-as.data.frame(cbind(Year,historical_NAA))
+historical_NAA<-as.data.frame(cbind(year,historical_NAA))
 
 historical_NAA <- historical_NAA %>%
-  dplyr::filter(Year<=TerminalAssess)
+  dplyr::filter(year<=TerminalAssess)
 
 write_dta(historical_NAA, path=file.path(output_folder,HistoricalNAASaveFile))
 
 
 
 # Pick exactly 1 year. See the header.
-RowPick<-which(Year==YearProj)
+RowPick<-which(year==YearProj)
 stopifnot(length(RowPick)==1)
 
 
