@@ -54,17 +54,20 @@
 
 # Install the version of wham that corresponds to the version used to do the stock assessment.
 packageDescription("wham")$RemoteSha
-# If the result of the previous command is not "cc1264219b07dbaf07ff07e6e6d549b44addab28", you will need to do
+# If the result of the previous command is not "cc1264219b07dbaf07ff07e6e6d549b44addab28", you will need to
 # install the version of wham that was used to do the initial estimation.
 # pak::pak("timjmiller/wham@cc1264219b07dbaf07ff07e6e6d549b44addab28")
 
-library(here)
 library(tidyverse)
 library(wham)
 library(haven)
 
 #Set paths, input names, and savefile names. Load in data
-here::i_am("data-raw/read_in_cod_assessment_data.R")
+
+BLAST_root<-file.path("//nefscfile","BLAST","READ-SSB-Lee-BLAST","cod_haddock_fy2025")
+
+input_folder<-file.path(BLAST_root,"source_data","cod","input")
+output_folder<-file.path(BLAST_root,"source_data","cod","output")
 
 
 ASAP_file_in<-"WGOM_COD_ASAP_2023_SEL3_2023.DAT"
@@ -79,7 +82,7 @@ HistoricalNAASaveFile<-"WGOM_Cod_historical_NAA_2024Assessment.dta"
 # Read in ASAP3 dat file and pick parameters
 ################################################################################
 ################################################################################
-asap3 <- read_asap3_dat(here("inputs",ASAP_file_in))
+asap3 <- read_asap3_dat(file.path(input_folder,ASAP_file_in))
 
 
 # Placeholders and parameters
@@ -146,7 +149,7 @@ cod_maturity= tail(asap3[[1]]$dat$maturity,1)
 ################################################################################
 
 mod_accepted <-
-  readRDS(file = here("inputs","mod_base_2023_noBLLS.rds"))
+  readRDS(file = file.path(input_folder,"mod_base_2023_noBLLS.rds"))
 # take a look at the version of WHAM used to generate the model.
 mod_accepted$wham_commit
 mod_accepted$wham_version
@@ -246,7 +249,7 @@ proj_out <-
 ################################################################################
 ################################################################################
 # Save the full set of projections
-saveRDS(proj_list, file = here("results",FullProjectionsSaveFile))
+saveRDS(proj_list, file = file.path(output_folder,FullProjectionsSaveFile))
 ################################################################################
 ################################################################################
 
@@ -272,7 +275,7 @@ NAA_logsd<-std1[[2]]$log_NAA_rep[1,1,,]
 #column names
 names<-paste0("age",1:ncol(NAA_logmean))
 
-TerminalAssess<-tail(mod$years_full,1)
+TerminalAssess<-tail(mod_list[[1]]$years_full,1)
 
 # Construct a dataframe of historical Numbers at Age
 historical_NAA<-exp(NAA_logmean)
@@ -282,7 +285,7 @@ historical_NAA<-as.data.frame(cbind(Year,historical_NAA))
 historical_NAA <- historical_NAA %>%
   dplyr::filter(Year<=TerminalAssess)
 
-write_dta(historical_NAA, path=here("results",HistoricalNAASaveFile))
+write_dta(historical_NAA, path=file.path(output_folder,HistoricalNAASaveFile))
 
 
 
@@ -314,6 +317,6 @@ NAA <-NAA %>%
          year=YearProj) %>%
   relocate(replicate,year)
 
-write_dta(NAA, path=here("results",ProjectedNAASaveFile))
+write_dta(NAA, path=file.path(output_folder,ProjectedNAASaveFile))
 
 

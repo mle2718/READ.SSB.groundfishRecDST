@@ -36,12 +36,11 @@
 
 # Install the version of wham that corresponds to the version used to do the stock assessment.
 packageDescription("wham")$RemoteSha
-#If the result of the previous command  is not "24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", you will need to do
+#If the result of the previous command  is not "24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", you will need to
 #remove.packages("wham")
 #pak::pak("timjmiller/wham@24dd1ab92d90aad2d9bb04dcc8e58f1a155def19")
 
 
-library(here)
 library(wham)
 library(dplyr)
 library(purrr)
@@ -50,8 +49,14 @@ library(ggplot2)
 library(haven)
 
 #Set paths and savefile names
-here::i_am("data-raw/read_in_haddock_assessment_data.R")
-FullProjectionsSaveFile<-paste0("GOMHaddock_Projections_", Sys.Date(), ".rds")
+
+BLAST_root<-file.path("//nefscfile","BLAST","READ-SSB-Lee-BLAST","cod_haddock_fy2025")
+
+input_folder<-file.path(BLAST_root,"source_data","haddock","input")
+output_folder<-file.path(BLAST_root,"source_data","haddock","output")
+
+
+FullProjectionsSaveFile<-paste0("GOM_Haddock_Projections_", Sys.Date(), ".rds")
 
 ProjectedNAASaveFile<-"GOM_Haddock_projected_NAA_2024Assessment.dta"
 HistoricalNAASaveFile<-"GOM_Haddock_historical_NAA_2024Assessment.dta"
@@ -70,20 +75,20 @@ set.seed(6)
 
 # Set some specifications ######################################################
 bridge_year_catch <- 2105 #GOM haddock 2024 MT PDT-supplied catch
-model_location <- here("inputs","mod_nola_dcpe_blls2.rds")
+model_location <- file.path(input_folder,"mod_nola_dcpe_blls2.rds")
 stock_name <- "GOM haddock"
 model_name <- "2024MT"
 ################################################################################
 
 # Load WAA projections (specific to GOM haddock) ###############################
 waa_proj_ssb <-
-  readxl::read_excel(here("inputs","waa_pred_2024-08-25.xlsx"),
+  readxl::read_excel(file.path(input_folder,"waa_pred_2024-08-25.xlsx"),
                      sheet = "SSB WAA") %>%
   filter(YEAR %in% 2024:2027) %>%
   select(-YEAR)
 
 waa_proj_catch <-
-  readxl::read_excel(here("inputs","waa_pred_2024-08-25.xlsx"),
+  readxl::read_excel(file.path(input_folder,"waa_pred_2024-08-25.xlsx"),
                      sheet = "Catch WAA") %>%
   filter(YEAR %in% 2024:2027) %>%
   select(-YEAR)
@@ -205,7 +210,7 @@ proj_out <-
 ################################################################################
 ################################################################################
 # Save the full set of projections
-# saveRDS(proj_list, file = here("results",FullProjectionsSaveFile))
+ saveRDS(proj_list, file = file.path(output_folder,FullProjectionsSaveFile))
 ################################################################################
 ################################################################################
 
@@ -283,7 +288,7 @@ historical_NAA<-as.data.frame(cbind(Year,historical_NAA))
 historical_NAA <- historical_NAA %>%
   dplyr::filter(Year<=TerminalAssess)
 
-# write_dta(historical_NAA, path=here("results",HistoricalNAASaveFile))
+write_dta(historical_NAA, path=file.path(output_folder,HistoricalNAASaveFile))
 
 
 
@@ -315,4 +320,4 @@ NAA <-NAA %>%
          year=YearProj) %>%
   relocate(replicate,year)
 
-# write_dta(NAA, path=here("results",ProjectedNAASaveFile))
+write_dta(NAA, path=file.path(output_folder,ProjectedNAASaveFile))
