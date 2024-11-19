@@ -45,12 +45,16 @@
 # cod.  WGOM Cod NAA are assumed to be lognormally distributed with a mean and sd parameters.
 # I use rlnorm() to generate a distribution
 
-
-###################################################
-###################################################
-###################################################
+############ End description###################################################
 
 
+
+###########Begin Housekeeping##################################################
+# Install wham if needed, load libraries
+
+# Install the version of wham that corresponds to the version used to do the stock assessment.
+packageDescription("wham")$RemoteSha
+# If the result of the previous command is not "cc1264219b07dbaf07ff07e6e6d549b44addab28", you will need to do
 # install the version of wham that was used to do the initial estimation.
 # pak::pak("timjmiller/wham@cc1264219b07dbaf07ff07e6e6d549b44addab28")
 
@@ -59,31 +63,31 @@ library(tidyverse)
 library(wham)
 library(haven)
 
-
+#Set paths, input names, and savefile names. Load in data
 here::i_am("data-raw/read_in_cod_assessment_data.R")
+
+
+ASAP_file_in<-"WGOM_COD_ASAP_2023_SEL3_2023.DAT"
+FullProjectionsSaveFile<-paste0("WGOMCod_Projections_", Sys.Date(), ".rds")
+ProjectedNAASaveFile<-"WGOM_Cod_projected_NAA_2024Assessment.dta"
+HistoricalNAASaveFile<-"WGOM_Cod_historical_NAA_2024Assessment.dta"
+
+
 
 ################################################################################
 ################################################################################
 # Read in ASAP3 dat file and pick parameters
 ################################################################################
 ################################################################################
-asap3 <- read_asap3_dat(here("inputs","WGOM_COD_ASAP_2023_SEL3_2023.DAT"))
+asap3 <- read_asap3_dat(here("inputs",ASAP_file_in))
+
 
 # Placeholders and parameters
 periods<-12 # there are 12 months in a year
-
-
-# Which year do you want a projection for, How many projections?
+# Which year do you want a projection for, How many projections? Set a seed.
 YearProj<-2025
 num_NAA_draws<-10000
-
-
-FullProjectionsSaveFile<-paste0("WGOMCod_Projections_", Sys.Date(), ".rds")
-
-ProjectedNAASaveFile<-"WGOM_Cod_projected_NAA_2024Assessment.dta"
-HistoricalNAASaveFile<-"WGOM_Cod_historical_NAA_2024Assessment.dta"
-
-
+set.seed(6)
 
 # I use tail(.x, 1) to pick the last "thing" out of the ASAP input file
 
@@ -172,7 +176,7 @@ set_specs <- function(mod) {
 
   proj.opts_list <-
     list(Model = rep(mod$model_name, times = 1),
-         scenario    = c("0.75Fmsy (2025-2027)"), #CP's scenario 2. This is just a string.
+         scenario    = c("0.75Fmsy (2025-2027)"), #Scenario 2 from the original projections. This is just a string.
          n.yrs       = rep(list(4), times = 1),   # Number of years is set in in (list(numyears)). Number of scenarios is set with times=
          proj_F_opt  = list(c(5, 5, 4, 4)),  # length=numyears.  stack on different things to make different projections
          proj_Fcatch = list(c(bridge, bridge, rep(0.75 * Fmsy, 2))) #2 # length=numyears

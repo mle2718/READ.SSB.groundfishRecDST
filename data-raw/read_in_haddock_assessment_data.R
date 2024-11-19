@@ -7,13 +7,37 @@
 # Author: Charles Perretti (2024-NOV)
 # Mod : Min-Yang Lee (2024-Nov)
 
-# Standard directions from PDT:
+# This code does 2 projections, but uses the first projection
 # 1) Fmsy 2025-2027 (this is the projection in the MT report) which also produces the ofl in 2025
-#
 # 2) 75%Fmsy 2025-2027 (potential ABCs)
-#
 
 
+# The bioeconomic model needs a few parameters that go into the stock assessment.
+# It also needs some parameters that come out of the stock assessment.
+# Bridging (2024 removals) is set at 2105mt, following the groundfish PDT
+
+############
+# Parameters that come out of the stock assessment
+# Weights at age
+# Historical NAA comes out of the WHAM stock assessment.
+
+######
+# Parameters that come out of the projections
+######
+# Numbers at age (in the future).  There isn't a stochastic projection for
+# Haddock NAA are assumed to be lognormally distributed with a mean and sd parameters.
+# I use rlnorm() to generate a distribution
+############ End description###################################################
+
+
+
+###########Begin Housekeeping##################################################
+# Check the version of wham, install wham if needed, load libraries. I like using the "pak" package for this.
+
+# Install the version of wham that corresponds to the version used to do the stock assessment.
+packageDescription("wham")$RemoteSha
+#If the result of the previous command  is not "24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", you will need to do
+#remove.packages("wham")
 #pak::pak("timjmiller/wham@24dd1ab92d90aad2d9bb04dcc8e58f1a155def19")
 
 
@@ -25,14 +49,22 @@ library(tidyr)
 library(ggplot2)
 library(haven)
 
+#Set paths and savefile names
 here::i_am("data-raw/read_in_haddock_assessment_data.R")
-# Which year do you want a projection for, How many projections?
-YearProj<-2025
-num_NAA_draws<-10000
 FullProjectionsSaveFile<-paste0("GOMHaddock_Projections_", Sys.Date(), ".rds")
 
 ProjectedNAASaveFile<-"GOM_Haddock_projected_NAA_2024Assessment.dta"
 HistoricalNAASaveFile<-"GOM_Haddock_historical_NAA_2024Assessment.dta"
+
+
+
+# Which year do you want a projection for, How many projections? Set a seed.
+YearProj<-2025
+num_NAA_draws<-10000
+set.seed(6)
+###########End Housekeeping#####################################################
+
+
 
 
 
