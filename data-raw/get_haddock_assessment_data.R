@@ -54,10 +54,11 @@ library(haven)
 BLAST_root<-file.path("//nefscfile","BLAST","READ-SSB-Lee-BLAST","cod_haddock_fy2025")
 
 input_folder<-file.path(BLAST_root,"source_data","haddock","input")
-output_folder<-file.path(BLAST_root,"source_data","haddock","output")
+output_folder<-file.path(BLAST_root,"source_data","haddock","output",Sys.Date())
 
+dir.create(file.path(output_folder), showWarnings = FALSE)
 
-FullProjectionsSaveFile<-paste0("GOM_Haddock_Projections_", Sys.Date(), ".rds")
+FullProjectionsSaveFile<-"GOM_Haddock_Projections.rds"
 
 ProjectedNAASaveFile<-"GOM_Haddock_projected_NAA_2024Assessment.dta"
 HistoricalNAASaveFile<-"GOM_Haddock_historical_NAA_2024Assessment.dta"

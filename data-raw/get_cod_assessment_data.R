@@ -67,11 +67,12 @@ library(haven)
 BLAST_root<-file.path("//nefscfile","BLAST","READ-SSB-Lee-BLAST","cod_haddock_fy2025")
 
 input_folder<-file.path(BLAST_root,"source_data","cod","input")
-output_folder<-file.path(BLAST_root,"source_data","cod","output")
+output_folder<-file.path(BLAST_root,"source_data","haddock","output",Sys.Date())
+dir.create(file.path(output_folder), showWarnings = FALSE)
 
 
 ASAP_file_in<-"WGOM_COD_ASAP_2023_SEL3_2023.DAT"
-FullProjectionsSaveFile<-paste0("WGOMCod_Projections_", Sys.Date(), ".rds")
+FullProjectionsSaveFile<-"WGOMCod_Projections.rds"
 ProjectedNAASaveFile<-"WGOM_Cod_projected_NAA_2024Assessment.dta"
 HistoricalNAASaveFile<-"WGOM_Cod_historical_NAA_2024Assessment.dta"
 
