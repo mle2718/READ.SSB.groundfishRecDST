@@ -180,8 +180,8 @@ set_specs <- function(mod) {
   proj.opts_list <-
     list(Model = rep(mod$model_name, times = 1),
          scenario    = c("0.75Fmsy (2025-2027)"), #Scenario 2 from the original projections. This is just a string.
-         n.yrs       = rep(list(4), times = 1),   # Number of years is set in in (list(numyears)). Number of scenarios is set with times=
-         proj_F_opt  = list(c(5, 5, 4, 4)),  # length=numyears.  stack on different things to make different projections
+         n.yrs       = rep(list(4), times = 1),   # Number of years is set in in (list(numyears)). Number of scenarios is set with times
+         proj_F_opt  = list(c(5, 5, 4, 4)),  # length=numyears.  stack on different things to make different projections. 5=metric tons, 4=an instantanous fishing mortality rate (F)
          proj_Fcatch = list(c(bridge, bridge, rep(0.75 * Fmsy, 2))) #2 # length=numyears
     )
 }
@@ -283,7 +283,7 @@ colnames(historical_NAA)<-names
 historical_NAA<-as.data.frame(cbind(year,historical_NAA))
 
 historical_NAA <- historical_NAA %>%
-  dplyr::filter(year<=TerminalAssess)
+  dplyr::filter(year<YearProj)
 
 write_dta(historical_NAA, path=file.path(output_folder,HistoricalNAASaveFile))
 

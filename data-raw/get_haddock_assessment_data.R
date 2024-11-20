@@ -286,7 +286,7 @@ colnames(historical_NAA)<-names
 historical_NAA<-as.data.frame(cbind(year,historical_NAA))
 
 historical_NAA <- historical_NAA %>%
-  dplyr::filter(year<=TerminalAssess)
+  dplyr::filter(year<YearProj)
 
 write_dta(historical_NAA, path=file.path(output_folder,HistoricalNAASaveFile))
 
