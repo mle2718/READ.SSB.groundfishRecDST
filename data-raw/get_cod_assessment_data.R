@@ -56,8 +56,8 @@
 packageDescription("wham")$RemoteSha
 # If the result of the previous command is not "cc1264219b07dbaf07ff07e6e6d549b44addab28", you will need to
 # install the version of wham that was used to do the initial estimation.
-# pak::pak("timjmiller/wham@cc1264219b07dbaf07ff07e6e6d549b44addab28")
-
+# pak::pak("timjmiller/wham@cc1264219b07dbaf07ff07e6e6d549b44addab28", ask=FALSE)
+# You should also probably restart R before running the rest of the code.
 library(tidyverse)
 library(wham)
 library(haven)

@@ -36,9 +36,10 @@
 
 # Install the version of wham that corresponds to the version used to do the stock assessment.
 packageDescription("wham")$RemoteSha
-#If the result of the previous command  is not "24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", you will need to
-#remove.packages("wham")
-#pak::pak("timjmiller/wham@24dd1ab92d90aad2d9bb04dcc8e58f1a155def19")
+#If the result of the previous command  is not "24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", you will need to  to
+# install the version of wham that was used to do the initial estimation.
+#pak::pak("timjmiller/wham@24dd1ab92d90aad2d9bb04dcc8e58f1a155def19", ask=FALSE)
+# You should also probably restart R before running the rest of the code.
 
 
 library(wham)
