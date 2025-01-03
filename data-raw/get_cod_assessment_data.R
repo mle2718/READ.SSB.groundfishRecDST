@@ -67,7 +67,7 @@ library(haven)
 BLAST_root<-file.path("//nefscfile","BLAST","READ-SSB-Lee-BLAST","cod_haddock_fy2025")
 
 input_folder<-file.path(BLAST_root,"source_data","cod","input")
-output_folder<-file.path(BLAST_root,"source_data","haddock","output",Sys.Date())
+output_folder<-file.path(BLAST_root,"source_data","cod","output",Sys.Date())
 dir.create(file.path(output_folder), showWarnings = FALSE)
 
 
